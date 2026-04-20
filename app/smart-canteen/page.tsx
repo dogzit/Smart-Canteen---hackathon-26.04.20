@@ -72,6 +72,7 @@ function MockQPayModal({ amount, onSuccess, onClose }: { amount: number; onSucce
 // --- Main Component ---
 export default function MenuListPage() {
     const [menus, setMenus] = useState<MenuItem[]>([]);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("All");
     const [search, setSearch] = useState("");
@@ -157,52 +158,97 @@ export default function MenuListPage() {
 
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
-                <header className="flex justify-between items-center mb-12">
+                {/* Профайл хэсэг */}
+
+                <header className="flex justify-between items-center mb-10 md:mb-12">
+                    {/* Зүүн тал: Лого */}
                     <div className="flex flex-col">
-                        <h1 className="text-3xl font-serif font-bold text-white tracking-tight italic">Smart Canteen</h1>
+                        <h1 className="text-2xl md:text-3xl font-serif font-bold text-white tracking-tight italic">Smart Canteen</h1>
                         <div className="flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 bg-[#d4a365] rounded-full animate-pulse" />
-                            <p className="text-[9px] uppercase tracking-[0.3em] text-gray-500 font-black">Ulaanbaatar, Mongolia</p>
+                            <span className="w-1 h-1 bg-[#d4a365] rounded-full animate-pulse" />
+                            <p className="text-[8px] md:text-[9px] uppercase tracking-[0.3em] text-gray-500 font-black">
+                                Ulaanbaatar, Mongolia
+                            </p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    {/* Баруун тал: Товчлуурууд */}
+                    <div className="flex items-center gap-2 md:gap-4">
+                        {/* Захиалгын түүх - Утсан дээр зөвхөн icon */}
                         <Link href="/orders">
-                            <button className="bg-[#111] p-4 rounded-2xl border border-white/5 hover:border-[#d4a365]/30 transition-all text-gray-400 hover:text-[#d4a365] flex items-center gap-2 group">
+                            <button className="bg-[#111] p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5 text-gray-400 hover:text-[#d4a365] transition-all flex items-center gap-2 group">
                                 <CheckCircle2 className="w-5 h-5" />
-                                <span className="text-[9px] font-black uppercase tracking-widest hidden md:inline ml-1">Захиалга</span>
+                                <span className="text-[9px] font-black uppercase tracking-widest hidden md:inline">Захиалга</span>
                             </button>
                         </Link>
 
-                        <button onClick={() => setIsCartOpen(true)} className="relative bg-[#111] p-4 rounded-2xl border border-white/5 hover:border-[#d4a365]/50 transition-all">
-                            <ShoppingCart className="text-gray-400 group-hover:text-[#d4a365]" />
-                            {cart.length > 0 && <span className="absolute -top-2 -right-2 bg-[#d4a365] text-black text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full border-4 border-[#0a0a0a]">{cart.length}</span>}
+                        {/* Сагс */}
+                        <button
+                            onClick={() => setIsCartOpen(true)}
+                            className="relative bg-[#111] p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5 text-gray-400 hover:text-[#d4a365] transition-all"
+                        >
+                            <ShoppingCart className="w-5 h-5" />
+                            {cart.length > 0 && (
+                                <span className="absolute -top-1.5 -right-1.5 bg-[#d4a365] text-black text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-[#0a0a0a]">
+                                    {cart.length}
+                                </span>
+                            )}
                         </button>
 
-                        <div className="relative group/profile">
-                            <button className="bg-[#111] p-1.5 rounded-2xl border border-white/5 hover:border-[#d4a365]/30 transition-all">
-                                <div className="w-10 h-10 bg-gradient-to-br from-[#d4a365] to-[#f0c080] rounded-xl flex items-center justify-center text-black font-black text-xs shadow-lg uppercase">
+                        {/* Профайл (Click-to-Toggle) */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                className="bg-[#111] p-1 rounded-xl md:rounded-2xl border border-white/5 active:scale-90 transition-transform"
+                            >
+                                <div className="w-9 h-9 md:w-10 md:h-10 bg-gradient-to-br from-[#d4a365] to-[#f0c080] rounded-lg md:rounded-xl flex items-center justify-center text-black font-black text-xs shadow-lg uppercase">
                                     {user?.name ? user.name.substring(0, 2) : "U"}
                                 </div>
                             </button>
-                            <div className="absolute right-0 top-full mt-2 w-56 bg-[#0f0f0f] border border-white/10 rounded-[2rem] p-3 opacity-0 invisible group-hover/profile:opacity-100 group-hover/profile:visible transition-all duration-300 z-50 shadow-2xl">
-                                <div className="px-4 py-4 border-b border-white/5 mb-2">
-                                    <p className="text-[9px] text-[#d4a365] font-black uppercase tracking-widest mb-1">Оюутны бүртгэл</p>
-                                    <p className="text-sm font-bold text-white truncate">{user?.name || "Зочин"}</p>
-                                    <p className="text-[10px] text-gray-500 truncate mt-0.5">{user?.email || "Мэдээлэл байхгүй"}</p>
-                                </div>
-                                <button onClick={() => { localStorage.removeItem("canteen_user"); window.location.href = "/login"; }} className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-500/10 rounded-xl transition-colors flex items-center gap-3">
-                                    <X className="w-4 h-4" /> Гарах
-                                </button>
-                            </div>
+
+                            <AnimatePresence>
+                                {isProfileOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)} />
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            className="absolute right-0 top-full mt-4 w-64 bg-[#0f0f0f] border border-white/10 rounded-[2rem] p-3 z-50 shadow-2xl backdrop-blur-xl"
+                                        >
+                                            <div className="px-4 py-4 border-b border-white/5 mb-2">
+                                                <p className="text-[9px] text-[#d4a365] font-black uppercase tracking-widest mb-1">Оюутны бүртгэл</p>
+                                                <p className="text-sm font-bold text-white truncate">{user?.name || "Зочин"}</p>
+                                                <p className="text-[10px] text-gray-500 truncate mt-0.5">{user?.email || "Мэдээлэл байхгүй"}</p>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    localStorage.removeItem("canteen_user");
+                                                    window.location.href = "/login";
+                                                }}
+                                                className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-500/10 rounded-xl transition-colors flex items-center gap-3"
+                                            >
+                                                <X className="w-4 h-4" /> Гарах
+                                            </button>
+                                        </motion.div>
+                                    </>
+                                )}
+                            </AnimatePresence>
                         </div>
                     </div>
                 </header>
 
                 {/* Categories */}
-                <div className="flex gap-3 overflow-x-auto no-scrollbar mb-12 py-2">
+                <div className="flex gap-2 overflow-x-auto no-scrollbar mb-8 md:mb-12 -mx-4 px-4 pb-2">
                     {CATEGORIES.map(cat => (
-                        <button key={cat} onClick={() => setActiveTab(cat)} className={`px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border whitespace-nowrap ${activeTab === cat ? 'bg-[#d4a365] text-black border-[#d4a365]' : 'bg-[#111] border-white/5 text-gray-500'}`}>
+                        <button
+                            key={cat}
+                            onClick={() => setActiveTab(cat)}
+                            className={`px-6 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border whitespace-nowrap ${activeTab === cat
+                                    ? 'bg-[#d4a365] text-black border-[#d4a365]'
+                                    : 'bg-[#111] border-white/5 text-gray-500'
+                                }`}
+                        >
                             {cat}
                         </button>
                     ))}
