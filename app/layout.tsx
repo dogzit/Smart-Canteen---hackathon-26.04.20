@@ -2,13 +2,17 @@ import type { Metadata } from 'next'
 import { Geist } from 'next/font/google'
 import './globals.css'
 import { Toaster } from "@/components/ui/sonner"
-import { AuthGuard } from "@/components/auth-guard" // Guard-аа импортлоно
+import { AuthGuard } from "@/components/auth-guard"
 
 const geist = Geist({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'School Hub',
+  title: 'Smart Canteen',
   description: 'AI Builders Hackathon — Premium Ordering System',
+  icons: {
+    icon: '/icon.png',
+    apple: '/icon.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -16,7 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`${geist.className} min-h-screen selection:bg-orange-500/30 bg-[#080808]`}>
 
-        {/* AuthGuard-аар ороосноор бүх Route хамгаалагдана */}
+
         <AuthGuard>
           <main className="relative">
             {children}
@@ -26,8 +30,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Toaster
           richColors
           theme="dark"
-          position="top-right"
+          position="bottom-right"
           closeButton
+
           toastOptions={{
             style: {
               background: 'rgba(20, 20, 20, 0.8)',

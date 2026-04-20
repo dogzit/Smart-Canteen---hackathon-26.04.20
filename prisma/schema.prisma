@@ -34,11 +34,18 @@ model Menu {
   image       String
   createdAt   DateTime @default(now())
 }
-
 model Order {
   id          Int      @id @default(autoincrement())
   studentName String
   itemName    String
   quantity    Int
+  
+
+  status      String   @default("PENDING")
+  
+
+  rating      Int?     
+  review      String?  
+  
   createdAt   DateTime @default(now())
 }
