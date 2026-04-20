@@ -25,27 +25,40 @@ model Otp {
   createdAt DateTime @default(now())
 }
 
-model Menu {
+model MenuItem {
   id          Int      @id @default(autoincrement())
   name        String
-  price       Int
-  category    String   @default("Main Course") // <--- Энийг нэмнэ
   description String?
+  price       Int
   image       String
-  createdAt   DateTime @default(now())
+  category    String
+  reviews     Review[]
 }
-model Order {
+
+model Review {
   id          Int      @id @default(autoincrement())
+  studentName String
+  rating      Int
+  review      String?
+  createdAt   DateTime @default(now())
+
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItemId Int
+
+  // Энийг яг ингэж бичнэ. Өмнө нь itemName-тэй байсан бол menuItemId-аар соль.
+  @@unique([studentName, menuItemId])
+}
+
+model Order {
+  id          Int    @id @default(autoincrement())
   studentName String
   itemName    String
   quantity    Int
-  
 
-  status      String   @default("PENDING")
-  
+  status String @default("PENDING")
 
-  rating      Int?     
-  review      String?  
-  
-  createdAt   DateTime @default(now())
+  rating Int?
+  review String?
+
+  createdAt DateTime @default(now())
 }

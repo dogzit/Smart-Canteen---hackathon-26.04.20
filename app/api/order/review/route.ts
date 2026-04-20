@@ -3,29 +3,54 @@ import { NextResponse } from "next/server";
 
 export async function PATCH(req: Request) {
   try {
-    const { studentName, itemName, rating, review } = await req.json();
+    const body = await req.json();
+    const { studentName, rating, review, itemName } = body;
+    let menuItemId = body.menuItemId;
 
-    // Тухайн оюутны тухайн хоолон дээрх хамгийн сүүлийн захиалгыг олох
-    const lastOrder = await prisma.order.findFirst({
-      where: { studentName, itemName },
-      orderBy: { createdAt: "desc" },
-    });
+    // 1. Хэрэв ID байхгүй бол нэрээр нь ID-г шүүж олох
+    if (!menuItemId && itemName) {
+      const item = await prisma.menuItem.findFirst({
+        where: { name: itemName },
+      });
+      menuItemId = item?.id;
+    }
 
-    if (!lastOrder) {
+    // 2. Шаардлагатай дата байгаа эсэхийг шалгах
+    if (!studentName || !menuItemId || !rating) {
       return NextResponse.json(
-        { error: "Захиалга олдсонгүй" },
-        { status: 404 },
+        { error: "Хоолны мэдээлэл дутуу байна (ID эсвэл Нэр олдсонгүй)" },
+        { status: 400 },
       );
     }
 
-    // Зөвхөн тэр сүүлийн захиалга дээр үнэлгээг шинэчлэх
-    const updatedOrder = await prisma.order.update({
-      where: { id: lastOrder.id },
-      data: { rating, review },
+    // 3. Review-г Upsert хийх
+    const result = await prisma.review.upsert({
+      where: {
+        studentName_menuItemId: {
+          studentName: studentName,
+          menuItemId: Number(menuItemId),
+        },
+      },
+      update: {
+        rating: Number(rating),
+        review: review || "",
+      },
+      create: {
+        studentName: studentName,
+        rating: Number(rating),
+        review: review || "",
+        menuItem: {
+          connect: { id: Number(menuItemId) },
+        },
+      },
     });
 
-    return NextResponse.json(updatedOrder);
-  } catch (e) {
-    return NextResponse.json({ error: "Алдаа гарлаа" }, { status: 500 });
+    return NextResponse.json({ success: true, data: result });
+  } catch (e: any) {
+    console.error("PATCH Error:", e);
+    return NextResponse.json(
+      { error: "Алдаа гарлаа", details: e.message },
+      { status: 500 },
+    );
   }
 }

@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
     const secret = new TextEncoder().encode(
       process.env.JWT_SECRET || "smart-canteen-secret",
     );
+
     const token = await new SignJWT({
       userId: user.id,
       email: user.email,
@@ -27,10 +28,14 @@ export async function POST(req: NextRequest) {
       .setExpirationTime("1d")
       .sign(secret);
 
+    // Хариунд хэрэглэгчийн нэр болон имэйлийг фронтенд руу буцааж байна
     const response = NextResponse.json({
       success: true,
       message: "Амжилттай нэвтэрлээ!",
+      name: user.name,
+      email: user.email,
     });
+
     response.cookies.set("auth-token", token, { httpOnly: true, path: "/" });
 
     return response;

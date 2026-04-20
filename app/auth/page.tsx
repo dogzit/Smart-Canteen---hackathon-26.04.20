@@ -18,7 +18,6 @@ export default function AuthPage() {
     const [otp, setOtp] = useState("");
     const [loading, setLoading] = useState(false);
 
-    // API Fetch Action
     const handleAction = async (type: "send" | "signup" | "login") => {
         setLoading(true);
         try {
@@ -28,7 +27,7 @@ export default function AuthPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, name, pin, code: otp }),
             });
-            const data = await res.json() as { success: boolean; message?: string; name?: string };
+            const data = await res.json() as { success: boolean; message?: string; name?: string; email?: string };
 
             if (data.success) {
                 if (type === "send") {
@@ -36,8 +35,18 @@ export default function AuthPage() {
                     toast.success("Код илгээгдлээ.");
                 } else {
                     toast.success("Амжилттай!");
-                    localStorage.setItem("canteen_user", JSON.stringify({ email, name: data.name ?? name }));
-                    router.push("/smart-canteen");
+
+                    // Хэрэглэгчийн датаг бэлдэх: 
+                    // Login үед датабэйсээс ирсэн нэрийг (data.name), 
+                    // Signup үед өөрийнх нь бичсэн нэрийг (name) ашиглана.
+                    const userData = {
+                        email: data.email || email,
+                        name: data.name || name
+                    };
+
+                    localStorage.setItem("canteen_user", JSON.stringify(userData));
+
+                    router.push("/smart-canteen"); // Эсвэл чиний үндсэн хуудасны зам
                     router.refresh();
                 }
             } else {
@@ -52,23 +61,19 @@ export default function AuthPage() {
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center p-4 bg-[#080808] relative overflow-hidden">
-            {/* Background Decor */}
             <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-orange-600/10 blur-[130px] rounded-full" />
                 <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-amber-600/5 blur-[130px] rounded-full" />
             </div>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 w-full max-w-[420px]">
-                {/* Logo */}
                 <div className="text-center mb-10">
                     <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-orange-500 to-amber-600 mb-5 shadow-2xl shadow-orange-500/20 text-4xl">🍱</div>
                     <h1 className="text-4xl font-black text-white tracking-tighter italic">Smart Canteen</h1>
                     <p className="text-[10px] mt-2 tracking-[0.4em] uppercase font-bold text-gray-500">Premium Ordering</p>
                 </div>
 
-                {/* Auth Card */}
                 <div className="bg-[#111111]/80 backdrop-blur-3xl border border-white/10 rounded-[40px] p-8 sm:p-10 shadow-2xl">
-                    {/* Tabs */}
                     <div className="flex p-1.5 bg-black/40 rounded-2xl mb-8 border border-white/5">
                         {(["login", "signup"] as AuthMode[]).map((m) => (
                             <button
@@ -161,7 +166,6 @@ function PinInput({ value, onChange }: { value: string; onChange: (v: string) =>
     };
 
     return (
-        /* ПИН нүднүүдийг хальж гарахгүй болгосон хэсэг */
         <div className="grid grid-cols-4 gap-3 w-full">
             {[0, 1, 2, 3].map((i) => (
                 <input

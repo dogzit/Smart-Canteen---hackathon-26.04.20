@@ -1,56 +1,59 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { Prisma } from "@prisma/client"; // Prisma-ийн төрлийг импортлох
 
-const DEFAULT_IMAGE =
-  "https://res.cloudinary.com/dr26hcsf0/image/upload/v1775213396/hwork/tc2v8kcuggikaqlvfdgq.jpg";
-
+// 1. БҮХ ХООЛЫГ ТАТАХ (GET)
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
 
-    // Төрлийг нь Prisma-ийн стандартаар зааж өгснөөр алдаа арилна
-    const whereClause: Prisma.MenuWhereInput =
+    const whereClause =
       category && category !== "All" ? { category: category } : {};
 
-    const menus = await prisma.menu.findMany({
+    const menus = await prisma.menuItem.findMany({
       where: whereClause,
-      orderBy: { createdAt: "desc" },
+      orderBy: { id: "desc" }, // Сүүлд нэмэгдсэн нь эхэндээ харагдана
     });
 
     return NextResponse.json(menus);
   } catch (e) {
-    console.error("GET Error:", e);
-    return NextResponse.json({ error: "Алдаа гарлаа" }, { status: 500 });
+    console.error("GET ALL Error:", e);
+    return NextResponse.json(
+      { error: "Дата татахад алдаа гарлаа" },
+      { status: 500 },
+    );
   }
 }
 
+// 2. ШИНЭ ХООЛ НЭМЭХ (POST)
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, price, description, image, category } = body;
+    const { name, description, price, image, category } = body;
 
-    if (!name || price === undefined || !category) {
+    if (!name || !price || !category) {
       return NextResponse.json(
         { error: "Мэдээлэл дутуу байна" },
         { status: 400 },
       );
     }
 
-    const menu = await prisma.menu.create({
+    const newItem = await prisma.menuItem.create({
       data: {
-        name: name.trim(),
-        price: Number(price),
-        category: category,
-        description: description?.trim() || null,
-        image: image || DEFAULT_IMAGE,
+        name,
+        description,
+        price: parseFloat(price),
+        image,
+        category,
       },
     });
 
-    return NextResponse.json(menu, { status: 201 });
+    return NextResponse.json(newItem, { status: 201 });
   } catch (e) {
     console.error("POST Error:", e);
-    return NextResponse.json({ error: "Серверийн алдаа" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Хоол нэмэхэд алдаа гарлаа" },
+      { status: 500 },
+    );
   }
 }
