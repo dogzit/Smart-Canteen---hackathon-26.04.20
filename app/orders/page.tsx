@@ -132,7 +132,7 @@ export default function OrderHistoryPage() {
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-gray-200 p-8 md:p-12 font-sans">
-            <Toaster richColors theme="dark" position="top-center" />
+
 
             <Link href="/" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-[#d4a365] transition-all mb-12 group">
                 <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
