@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ChevronRight,
@@ -13,10 +13,22 @@ import {
     Cpu
 } from 'lucide-react';
 
+// Слайдын төрлүүдийг тодорхойлж өгвөл TypeScript-д илүү тодорхой болно
+type Slide = {
+    title: string;
+    subtitle: string;
+    content?: string;
+    icon: React.ReactNode;
+    type: "hero" | "split" | "analytics" | "features" | "final";
+    items?: { label: string; desc: string }[];
+    analytics?: { label: string; value: string; desc: string }[];
+    features?: string[];
+};
+
 const Presentation = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
 
-    const slides = [
+    const slides: Slide[] = [
         {
             title: "Smart Canteen",
             subtitle: "The Future of Campus Dining",
@@ -64,17 +76,25 @@ const Presentation = () => {
         }
     ];
 
-    const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
-    const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+    // Functions wrapped in useCallback for stable dependencies
+    const nextSlide = useCallback(() => {
+        setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, [slides.length]);
+
+    const prevSlide = useCallback(() => {
+        setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+    }, [slides.length]);
 
     useEffect(() => {
-        const handleKeyDown = (e) => {
+        // KeyboardEvent төрлийг зааж өгснөөр алдаа засагдана
+        const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'ArrowRight') nextSlide();
             if (e.key === 'ArrowLeft') prevSlide();
         };
+
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
+    }, [nextSlide, prevSlide]);
 
     const handleLaunchDemo = () => {
         if (typeof window !== 'undefined') {
@@ -126,7 +146,7 @@ const Presentation = () => {
                                     {slide.icon}
                                 </div>
                                 <div className="space-y-8">
-                                    {slide.items.map((item, idx) => (
+                                    {slide.items?.map((item, idx) => (
                                         <div key={idx} className="bg-white/5 p-6 rounded-[2rem] border border-white/10 shadow-xl">
                                             <h4 className="text-[#d4a365] font-bold text-lg mb-1">{item.label}</h4>
                                             <p className="text-gray-400">{item.desc}</p>
@@ -136,13 +156,13 @@ const Presentation = () => {
                             </div>
                         )}
 
-                        {/* ANALYTICS TYPE (ШИНЭЭР НЭМЭВ) */}
+                        {/* ANALYTICS TYPE */}
                         {slide.type === "analytics" && (
                             <div className="text-center">
                                 <h2 className="text-5xl font-bold mb-4 italic font-serif">{slide.title}</h2>
                                 <p className="text-gray-400 mb-12 max-w-2xl mx-auto">{slide.content}</p>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                    {slide.analytics.map((item, idx) => (
+                                    {slide.analytics?.map((item, idx) => (
                                         <motion.div
                                             key={idx}
                                             initial={{ y: 20, opacity: 0 }}
@@ -164,7 +184,7 @@ const Presentation = () => {
                             <div className="flex flex-col items-center">
                                 <h2 className="text-5xl font-bold mb-12 italic font-serif">{slide.title}</h2>
                                 <div className="flex gap-6 flex-wrap justify-center">
-                                    {slide.features.map((f, i) => (
+                                    {slide.features?.map((f, i) => (
                                         <div key={i} className="px-8 py-4 bg-white/5 border border-white/10 rounded-full text-[#d4a365] font-bold">
                                             {f}
                                         </div>
