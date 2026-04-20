@@ -1,26 +1,64 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: var(--primary);
+  --color-border: var(--border);
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  /* Ерөнхий суурь өнгийг маш бараан (Black/Dark Gray) болгов */
+  --background: oklch(0.1 0 0);
+  --foreground: oklch(0.98 0 0);
+
+  --primary: oklch(0.6 0.2 30); /* Orange-ish */
+  --primary-foreground: oklch(1 0 0);
+
+  /* Хүрээний өнгийг маш бүдгэг болгох (Цагаан хүрээ гарахаас сэргийлнэ) */
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 5%);
+  --ring: oklch(0.6 0.2 30 / 50%);
+
+  --radius: 1.25rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  @layer base {
+    input[type="password"] {
+      font-family: caption; /* ПИН-ийн цэгийг гоё харагдуулна */
+    }
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    /* Скролл хийхэд хажуу талд цагаан зураас гаргахгүй байх */
+    background-color: #0a0a0a;
+  }
+
+  /* Бүх товчлуур дээрх глобал эффект */
+  button {
+    @apply cursor-pointer transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  /* Input-үүд дээрх цэвэрхэн фокус */
+  input {
+    @apply outline-none focus:ring-1 focus:ring-orange-500/50;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Glassmorphism туслах класс */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }

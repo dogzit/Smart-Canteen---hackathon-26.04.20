@@ -1,0 +1,43 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  pin       String?
+  otps      Otp[]
+  createdAt DateTime @default(now())
+}
+
+model Otp {
+  id        Int      @id @default(autoincrement())
+  code      String
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Menu {
+  id          Int      @id @default(autoincrement())
+  name        String
+  price       Int
+  description String?
+  image       String
+  createdAt   DateTime @default(now())
+}
+
+model Order {
+  id          Int      @id @default(autoincrement())
+  studentName String
+  itemName    String
+  quantity    Int
+  createdAt   DateTime @default(now())
+}
