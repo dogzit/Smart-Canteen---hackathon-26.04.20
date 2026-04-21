@@ -121,7 +121,7 @@ export default function OrderHistoryPage() {
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-gray-200 font-sans">
-            <Toaster position="top-center" theme="dark" />
+
 
             <div className="max-w-2xl mx-auto px-6 py-10">
                 {/* Back */}
@@ -175,8 +175,8 @@ export default function OrderHistoryPage() {
                                                         <Star
                                                             key={i}
                                                             className={`w-2.5 h-2.5 ${i < group.rating!
-                                                                    ? "fill-[#d4a365] text-[#d4a365]"
-                                                                    : "text-white/8 fill-none"
+                                                                ? "fill-[#d4a365] text-[#d4a365]"
+                                                                : "text-white/8 fill-none"
                                                                 }`}
                                                         />
                                                     ))}
@@ -260,8 +260,8 @@ export default function OrderHistoryPage() {
                                                         <Star
                                                             key={i}
                                                             className={`w-4 h-4 ${i < drawerGroup.rating!
-                                                                    ? "fill-[#d4a365] text-[#d4a365]"
-                                                                    : "text-white/10 fill-none"
+                                                                ? "fill-[#d4a365] text-[#d4a365]"
+                                                                : "text-white/10 fill-none"
                                                                 }`}
                                                         />
                                                     ))}
@@ -308,8 +308,8 @@ export default function OrderHistoryPage() {
                                                     >
                                                         <Star
                                                             className={`w-10 h-10 transition-colors ${i <= (hoveredStar || rating)
-                                                                    ? "fill-[#d4a365] text-[#d4a365]"
-                                                                    : "text-white/10 fill-none"
+                                                                ? "fill-[#d4a365] text-[#d4a365]"
+                                                                : "text-white/10 fill-none"
                                                                 }`}
                                                         />
                                                     </button>
