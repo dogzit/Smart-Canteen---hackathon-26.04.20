@@ -131,7 +131,7 @@ export default function DishDetailPage() {
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-white pb-20 selection:bg-[#d4a365]/30">
-            <Toaster position="top-center" richColors />
+
 
             <div className="relative h-[45vh] md:h-[60vh] w-full overflow-hidden">
                 <motion.img

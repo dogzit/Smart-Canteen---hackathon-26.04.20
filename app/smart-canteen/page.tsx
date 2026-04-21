@@ -160,7 +160,7 @@ export default function MenuListPage() {
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] p-6 md:p-10 text-gray-200 font-sans">
-            <Toaster position="top-center" richColors />
+
             <AnimatePresence>
                 {isPaying && <MockQPayModal amount={totalPrice} onClose={() => setIsPaying(false)} onSuccess={handlePaymentSuccess} />}
             </AnimatePresence>
