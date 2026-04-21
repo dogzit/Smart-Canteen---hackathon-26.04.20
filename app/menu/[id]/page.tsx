@@ -4,17 +4,16 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
     ChevronLeft, Star, Clock, ShoppingCart, Plus, Minus,
-    Loader2, MessageSquare, User
+    MessageSquare
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast, Toaster } from "sonner";
 import { useCartStore } from "@/store/useCartStore";
 
-// --- Types (Prisma Schema-тай нийцүүлсэн) ---
 interface Review {
     id: number;
     rating: number;
-    review: string; // Prisma дээр 'review' багана байгаа тул
+    review: string;
     studentName: string;
     createdAt: string;
 }
@@ -27,6 +26,66 @@ interface MenuItem {
     image: string;
     category: string;
     reviews: Review[];
+}
+
+// --- Hero Skeleton ---
+function SkeletonDetail() {
+    return (
+        <div className="min-h-screen bg-[#0a0a0a] animate-pulse pb-20">
+            <div className="h-[45vh] md:h-[60vh] w-full bg-white/5" />
+            <div className="max-w-4xl mx-auto px-6 -mt-24 relative z-10">
+                <div className="bg-[#111] border border-white/5 rounded-[3rem] p-8 md:p-12">
+                    <div className="flex flex-col md:flex-row justify-between gap-6 mb-10">
+                        <div className="flex-1">
+                            <div className="h-3 bg-white/5 rounded-full w-24 mb-4" />
+                            <div className="h-10 bg-white/5 rounded-2xl w-3/4 mb-3" />
+                            <div className="h-10 bg-white/5 rounded-2xl w-1/2 mb-6" />
+                            <div className="flex gap-4">
+                                <div className="h-8 bg-white/5 rounded-full w-28" />
+                                <div className="h-8 bg-white/5 rounded-full w-24" />
+                            </div>
+                        </div>
+                        <div className="h-20 w-40 bg-white/5 rounded-3xl" />
+                    </div>
+                    <div className="space-y-3 mb-12">
+                        <div className="h-3 bg-white/5 rounded-full w-full" />
+                        <div className="h-3 bg-white/5 rounded-full w-5/6" />
+                        <div className="h-3 bg-white/5 rounded-full w-4/6" />
+                    </div>
+                    <div className="flex gap-6 pt-10 border-t border-white/5">
+                        <div className="h-14 bg-white/5 rounded-full w-40" />
+                        <div className="h-14 bg-white/5 rounded-full flex-1" />
+                    </div>
+                </div>
+
+                {/* Reviews skeleton */}
+                <div className="mt-20 space-y-6">
+                    <div className="flex justify-between items-center px-4 mb-10">
+                        <div className="h-8 bg-white/5 rounded-2xl w-56" />
+                        <div className="h-4 bg-white/5 rounded-full w-20" />
+                    </div>
+                    {[1, 2].map(i => (
+                        <div key={i} className="bg-[#111] p-8 rounded-[2.5rem] border border-white/5">
+                            <div className="flex justify-between mb-6">
+                                <div className="flex gap-4 items-center">
+                                    <div className="w-12 h-12 bg-white/5 rounded-2xl" />
+                                    <div>
+                                        <div className="h-4 bg-white/5 rounded-full w-28 mb-2" />
+                                        <div className="h-3 bg-white/5 rounded-full w-20" />
+                                    </div>
+                                </div>
+                                <div className="h-8 bg-white/5 rounded-2xl w-16" />
+                            </div>
+                            <div className="space-y-2 pl-2">
+                                <div className="h-3 bg-white/5 rounded-full w-full" />
+                                <div className="h-3 bg-white/5 rounded-full w-4/5" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
 }
 
 export default function DishDetailPage() {
@@ -42,7 +101,6 @@ export default function DishDetailPage() {
         const fetchDetail = async () => {
             if (!params?.id) return;
             try {
-                // API-аас дата татах
                 const res = await fetch(`/api/menu/${params.id}`);
                 if (!res.ok) throw new Error();
                 const data = await res.json();
@@ -56,7 +114,6 @@ export default function DishDetailPage() {
         fetchDetail();
     }, [params?.id]);
 
-    // Одны дундаж тооцоолох (Алдаанаас сэргийлсэн)
     const reviews = item?.reviews || [];
     const averageRating = reviews.length
         ? (reviews.reduce((acc, rev) => acc + rev.rating, 0) / reviews.length).toFixed(1)
@@ -64,29 +121,18 @@ export default function DishDetailPage() {
 
     const handleAddToCart = () => {
         if (!item) return;
-        addItem({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: qty,
-            image: item.image
-        });
+        addItem({ id: item.id, name: item.name, price: item.price, quantity: qty, image: item.image });
         toast.success(`${item.name} сагсанд нэмэгдлээ!`);
     };
 
-    if (loading) return (
-        <div className="h-screen bg-[#0a0a0a] flex items-center justify-center">
-            <Loader2 className="animate-spin text-[#d4a365] w-10 h-10" />
-        </div>
-    );
+    if (loading) return <SkeletonDetail />;
 
     if (!item) return <div className="text-white text-center py-20 font-serif italic">Хоол олдсонгүй.</div>;
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-white pb-20 selection:bg-[#d4a365]/30">
+            <Toaster position="top-center" richColors />
 
-
-            {/* Hero Section */}
             <div className="relative h-[45vh] md:h-[60vh] w-full overflow-hidden">
                 <motion.img
                     initial={{ scale: 1.1, opacity: 0 }}
@@ -96,7 +142,6 @@ export default function DishDetailPage() {
                     className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/20 to-transparent" />
-
                 <button
                     onClick={() => router.back()}
                     className="absolute top-8 left-8 p-3 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl hover:bg-[#d4a365] hover:text-black transition-all z-20 group"
@@ -111,7 +156,6 @@ export default function DishDetailPage() {
                     animate={{ y: 0, opacity: 1 }}
                     className="bg-[#111] border border-white/5 rounded-[3rem] p-8 md:p-12 shadow-[0_-20px_50px_-12px_rgba(0,0,0,0.5)]"
                 >
-                    {/* Header Info */}
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-10">
                         <div>
                             <span className="text-[#d4a365] text-[10px] font-black uppercase tracking-[0.4em] mb-3 block">
@@ -141,20 +185,13 @@ export default function DishDetailPage() {
                         {item.description}
                     </p>
 
-                    {/* Order Bar */}
                     <div className="flex flex-col md:flex-row items-center gap-6 pt-10 border-t border-white/5">
                         <div className="flex items-center gap-8 bg-white/5 p-2 px-6 rounded-full border border-white/5">
-                            <button
-                                onClick={() => setQty(q => Math.max(1, q - 1))}
-                                className="p-2 hover:text-[#d4a365] transition-colors"
-                            >
+                            <button onClick={() => setQty(q => Math.max(1, q - 1))} className="p-2 hover:text-[#d4a365] transition-colors">
                                 <Minus className="w-5" />
                             </button>
                             <span className="text-2xl font-mono font-bold min-w-[20px] text-center">{qty}</span>
-                            <button
-                                onClick={() => setQty(q => q + 1)}
-                                className="p-2 hover:text-[#d4a365] transition-colors"
-                            >
+                            <button onClick={() => setQty(q => q + 1)} className="p-2 hover:text-[#d4a365] transition-colors">
                                 <Plus className="w-5" />
                             </button>
                         </div>
@@ -168,7 +205,6 @@ export default function DishDetailPage() {
                     </div>
                 </motion.div>
 
-                {/* --- Сэтгэгдлийн хэсэг --- */}
                 <div className="mt-20">
                     <div className="flex items-center justify-between mb-10 px-4">
                         <div className="flex items-center gap-4">

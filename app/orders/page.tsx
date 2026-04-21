@@ -6,23 +6,42 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast, Toaster } from "sonner";
 import Link from "next/link";
 
-// --- Types ---
 interface Order {
     id: number;
     itemName: string;
     quantity: number;
     status: string;
     createdAt: string;
-    menuItemId?: number; // Нэмэлтээр оруулж өгөв
+    menuItemId?: number;
 }
 
 interface GroupedOrder {
     itemName: string;
-    menuItemId: number | null; // ID-г хадгалах талбар
+    menuItemId: number | null;
     totalQuantity: number;
     rating: number | null;
     review: string | null;
     history: Order[];
+}
+
+function SkeletonCard() {
+    return (
+        <div className="bg-[#111] rounded-[2.5rem] border border-white/5 p-8 animate-pulse">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                    <div className="w-14 h-14 bg-white/5 rounded-3xl" />
+                    <div>
+                        <div className="h-4 bg-white/5 rounded-full w-36 mb-3" />
+                        <div className="h-3 bg-white/5 rounded-full w-20" />
+                    </div>
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className="h-9 bg-white/5 rounded-2xl w-20" />
+                    <div className="w-5 h-5 bg-white/5 rounded-full" />
+                </div>
+            </div>
+        </div>
+    );
 }
 
 export default function OrderHistoryPage() {
@@ -31,7 +50,6 @@ export default function OrderHistoryPage() {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<{ name: string } | null>(null);
 
-    // Modal States
     const [selectedGroup, setSelectedGroup] = useState<GroupedOrder | null>(null);
     const [rating, setRating] = useState(0);
     const [reviewText, setReviewText] = useState("");
@@ -59,18 +77,14 @@ export default function OrderHistoryPage() {
             const orders: Order[] = await ordersRes.json();
             const reviews: any[] = await reviewsRes.json();
 
-            if (!Array.isArray(orders)) {
-                setGroupedOrders([]);
-                return;
-            }
+            if (!Array.isArray(orders)) { setGroupedOrders([]); return; }
 
             const groups = orders.reduce((acc: Record<string, GroupedOrder>, order) => {
                 if (!acc[order.itemName]) {
                     const itemReview = Array.isArray(reviews) ? reviews.find(r => r.itemName === order.itemName) : null;
-
                     acc[order.itemName] = {
                         itemName: order.itemName,
-                        menuItemId: order.menuItemId || null, // Захиалга дотор ирж буй ID-г авна
+                        menuItemId: order.menuItemId || null,
                         totalQuantity: 0,
                         history: [],
                         rating: itemReview?.rating || null,
@@ -84,7 +98,6 @@ export default function OrderHistoryPage() {
 
             setGroupedOrders(Object.values(groups));
         } catch (error) {
-            console.error("Fetch error:", error);
             toast.error("Мэдээлэл татахад алдаа гарлаа");
         } finally {
             setLoading(false);
@@ -93,11 +106,7 @@ export default function OrderHistoryPage() {
 
     const handleUpdateReview = async () => {
         if (!user || rating === 0) return toast.error("Үнэлгээгээ сонгоно уу!");
-
-        // ШАЛГАЛТ: menuItemId байхгүй байсан ч itemName байвал Backend рүү явуулна
-        if (!selectedGroup?.menuItemId && !selectedGroup?.itemName) {
-            return toast.error("Хоолны мэдээлэл олдсонгүй.");
-        }
+        if (!selectedGroup?.menuItemId && !selectedGroup?.itemName) return toast.error("Хоолны мэдээлэл олдсонгүй.");
 
         setIsSubmitting(true);
         try {
@@ -106,9 +115,9 @@ export default function OrderHistoryPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     studentName: user.name,
-                    menuItemId: selectedGroup?.menuItemId, // Байвал ID
-                    itemName: selectedGroup?.itemName,     // Байхгүй бол Нэр (Backend-д хэрэгтэй)
-                    rating: rating,
+                    menuItemId: selectedGroup?.menuItemId,
+                    itemName: selectedGroup?.itemName,
+                    rating,
                     review: reviewText
                 }),
             });
@@ -123,7 +132,7 @@ export default function OrderHistoryPage() {
                 const errorData = await res.json();
                 toast.error(errorData.error || "Хадгалахад алдаа гарлаа");
             }
-        } catch (error) {
+        } catch {
             toast.error("Сервертэй холбогдоход алдаа гарлаа");
         } finally {
             setIsSubmitting(false);
@@ -132,7 +141,7 @@ export default function OrderHistoryPage() {
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-gray-200 p-8 md:p-12 font-sans">
-
+            <Toaster position="top-center" richColors />
 
             <Link href="/" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-[#d4a365] transition-all mb-12 group">
                 <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -147,9 +156,11 @@ export default function OrderHistoryPage() {
 
                 <div className="space-y-6">
                     {loading ? (
-                        <div className="flex flex-col items-center justify-center py-32">
-                            <Loader2 className="animate-spin text-[#d4a365]" />
-                        </div>
+                        <>
+                            <SkeletonCard />
+                            <SkeletonCard />
+                            <SkeletonCard />
+                        </>
                     ) : groupedOrders.length === 0 ? (
                         <div className="text-center py-32 bg-[#111]/30 rounded-[3rem] border border-dashed border-white/5">
                             <Utensils className="w-12 h-12 mx-auto text-gray-800 mb-6" />
@@ -158,7 +169,6 @@ export default function OrderHistoryPage() {
                     ) : (
                         groupedOrders.map((group) => {
                             const isExpanded = expandedItem === group.itemName;
-
                             return (
                                 <div key={group.itemName} className="bg-[#111] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl transition-all">
                                     <div onClick={() => setExpandedItem(isExpanded ? null : group.itemName)} className="p-8 flex items-center justify-between cursor-pointer hover:bg-white/[0.01]">
@@ -182,12 +192,7 @@ export default function OrderHistoryPage() {
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setRating(group.rating || 0);
-                                                    setReviewText(group.review || "");
-                                                    setSelectedGroup(group);
-                                                }}
+                                                onClick={(e) => { e.stopPropagation(); setRating(group.rating || 0); setReviewText(group.review || ""); setSelectedGroup(group); }}
                                                 className="bg-white/5 hover:bg-[#d4a365] hover:text-black px-5 py-2.5 rounded-2xl border border-white/5 text-[9px] font-black uppercase tracking-widest transition-all"
                                             >
                                                 {group.rating ? "Засах" : "Үнэлэх"}
@@ -223,7 +228,6 @@ export default function OrderHistoryPage() {
                 </div>
             </div>
 
-            {/* Modal */}
             <AnimatePresence>
                 {selectedGroup && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">

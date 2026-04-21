@@ -10,10 +10,26 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast, Toaster } from "sonner";
 import { useCartStore } from "@/store/useCartStore";
 
-// --- Ангиллын тогтмол дараалал (Таны хүссэнээр) ---
 const CATEGORY_ORDER = ["Main Course", "Noodles", "Appetizer", "Dessert", "Drinks"];
 
-// --- Mock QPay Modal Component ---
+function SkeletonCard() {
+    return (
+        <div className="bg-[#111] rounded-[2.5rem] border border-white/5 p-7 flex flex-col animate-pulse">
+            <div className="h-52 rounded-2xl bg-white/5 mb-6" />
+            <div className="h-4 bg-white/5 rounded-full w-2/3 mb-3" />
+            <div className="h-3 bg-white/5 rounded-full w-full mb-2" />
+            <div className="h-3 bg-white/5 rounded-full w-4/5 mb-8" />
+            <div className="mt-auto pt-4 border-t border-white/5">
+                <div className="flex justify-between items-center mb-6">
+                    <div className="h-6 bg-white/5 rounded-full w-24" />
+                    <div className="h-9 bg-white/5 rounded-xl w-28" />
+                </div>
+                <div className="h-12 bg-white/5 rounded-2xl w-full" />
+            </div>
+        </div>
+    );
+}
+
 function MockQPayModal({ amount, onSuccess, onClose }: { amount: number; onSuccess: () => void; onClose: () => void }) {
     const [step, setStep] = useState<"qr" | "loading" | "success">("qr");
     const handleMockPay = () => {
@@ -126,8 +142,7 @@ export default function MenuListPage() {
         setQuantities(prev => ({ ...prev, [id]: Math.max(0, (prev[id] || 0) + delta) }));
     };
 
-    // --- ЭРЭМБЭЛЭХ ЛОГИКИЙГ САЙЖРУУЛСАН ХЭСЭГ ---
-    const filteredMenus = [...menus] // Оригинал датаг өөрчлөхгүйн тулд хуулбар авна
+    const filteredMenus = [...menus]
         .filter(m =>
             (activeTab === "All" || m.category === activeTab) &&
             m.name.toLowerCase().includes(search.toLowerCase())
@@ -135,13 +150,9 @@ export default function MenuListPage() {
         .sort((a, b) => {
             const indexA = CATEGORY_ORDER.indexOf(a.category);
             const indexB = CATEGORY_ORDER.indexOf(b.category);
-
-            // 1. Ангиллын дарааллаар эрэмбэлэх (Main Course -> Noodles ...)
             if (indexA !== indexB) {
                 return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
             }
-
-            // 2. Хэрэв ангилал нь ижил бол ID-аар нь эрэмбэлэх (Хуучин хоол нь дээрээ)
             return a.id - b.id;
         });
 
@@ -149,7 +160,7 @@ export default function MenuListPage() {
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] p-6 md:p-10 text-gray-200 font-sans">
-
+            <Toaster position="top-center" richColors />
             <AnimatePresence>
                 {isPaying && <MockQPayModal amount={totalPrice} onClose={() => setIsPaying(false)} onSuccess={handlePaymentSuccess} />}
             </AnimatePresence>
@@ -219,9 +230,10 @@ export default function MenuListPage() {
                 </div>
 
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-gray-500 italic">
-                        <Loader2 className="animate-spin mb-4 text-[#d4a365]" />
-                        <p className="text-xs font-black uppercase tracking-widest">Ачаалж байна...</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <SkeletonCard key={i} />
+                        ))}
                     </div>
                 ) : filteredMenus.length === 0 ? (
                     <div className="text-center py-24 bg-[#111]/30 rounded-[3rem] border border-dashed border-white/5 italic text-gray-600">Хоол олдсонгүй</div>
