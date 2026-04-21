@@ -112,27 +112,44 @@ export default function MenuListPage() {
         }
     };
 
+    // ЧУХАЛ: Захиалга илгээх хэсэг
     const handlePaymentSuccess = async () => {
+        if (!user?.name) {
+            toast.error("Хэрэглэгчийн мэдээлэл олдсонгүй");
+            return;
+        }
+
         setIsPaying(false);
         setIsOrdering(true);
+        const loadingToast = toast.loading("Захиалга бүртгэж байна...");
+
         try {
+            // Захиалга бүрийг сагснаас нэг нэгээр нь үүсгэнэ
             const promises = cartItems.map(item =>
                 fetch("/api/order", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        studentName: user?.name || "Зочин",
+                        studentName: user.name,
                         itemName: item.name,
-                        quantity: item.quantity
+                        quantity: item.quantity,
+                        menuItemId: item.id // ЧУХАЛ: Энийг дамжуулахгүй бол алдаа заана!
                     }),
                 })
             );
-            await Promise.all(promises);
-            toast.success("Захиалга баталгаажлаа!");
-            clearCart();
-            setIsCartOpen(false);
+
+            const responses = await Promise.all(promises);
+            const allOk = responses.every(r => r.ok);
+
+            if (allOk) {
+                toast.success("Захиалга баталгаажлаа!", { id: loadingToast });
+                clearCart();
+                setIsCartOpen(false);
+            } else {
+                toast.error("Зарим захиалгад алдаа гарлаа", { id: loadingToast });
+            }
         } catch (error) {
-            toast.error("Захиалга бүртгэхэд алдаа гарлаа");
+            toast.error("Сүлжээний алдаа гарлаа", { id: loadingToast });
         } finally {
             setIsOrdering(false);
         }
@@ -161,11 +178,13 @@ export default function MenuListPage() {
     return (
         <div className="min-h-screen bg-[#0a0a0a] p-6 md:p-10 text-gray-200 font-sans">
 
+
             <AnimatePresence>
                 {isPaying && <MockQPayModal amount={totalPrice} onClose={() => setIsPaying(false)} onSuccess={handlePaymentSuccess} />}
             </AnimatePresence>
 
             <div className="max-w-6xl mx-auto">
+                {/* Header хэсэг - Хэвээрээ */}
                 <header className="flex justify-between items-start mb-12">
                     <div className="flex flex-col">
                         <h1 className="text-3xl md:text-4xl font-serif font-bold text-white italic tracking-tight">Smart Canteen</h1>
@@ -183,7 +202,7 @@ export default function MenuListPage() {
                         <button onClick={() => setIsCartOpen(true)} className="relative bg-[#111] p-3.5 rounded-2xl border border-white/5 text-gray-400 hover:text-[#d4a365] transition-all">
                             <ShoppingCart className="w-5 h-5" />
                             {mounted && cartItems.length > 0 && (
-                                <span className="absolute -top-1.5 -right-1.5 bg-[#d4a365] text-black text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-[#0a0a0a] animate-bounce">
+                                <span className="absolute -top-1.5 -right-1.5 bg-[#d4a365] text-black text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-[#0a0a0a]">
                                     {cartItems.length}
                                 </span>
                             )}
@@ -215,6 +234,7 @@ export default function MenuListPage() {
                     </div>
                 </header>
 
+                {/* Tabs & Search хэсэг - Хэвээрээ */}
                 <div className="flex flex-col md:flex-row md:items-center gap-6 mb-12">
                     <div className="flex-grow flex gap-2 overflow-x-auto no-scrollbar pb-2">
                         {["All", ...CATEGORY_ORDER].map(cat => (
@@ -225,32 +245,26 @@ export default function MenuListPage() {
                     </div>
                     <div className="relative group">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#d4a365] transition-colors" />
-                        <input type="text" placeholder="Зоог хайх..." value={search} onChange={(e) => setSearch(e.target.value)} className="bg-[#111] border border-white/5 rounded-2xl py-3 pl-12 pr-6 text-sm focus:outline-none focus:border-[#d4a365]/50 focus:ring-1 focus:ring-[#d4a365]/50 w-full md:w-64 transition-all" />
+                        <input type="text" placeholder="Зоог хайх..." value={search} onChange={(e) => setSearch(e.target.value)} className="bg-[#111] border border-white/5 rounded-2xl py-3 pl-12 pr-6 text-sm focus:outline-none focus:border-[#d4a365]/50 w-full md:w-64 transition-all" />
                     </div>
                 </div>
 
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {Array.from({ length: 6 }).map((_, i) => (
-                            <SkeletonCard key={i} />
-                        ))}
+                        {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
                     </div>
-                ) : filteredMenus.length === 0 ? (
-                    <div className="text-center py-24 bg-[#111]/30 rounded-[3rem] border border-dashed border-white/5 italic text-gray-600">Хоол олдсонгүй</div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {filteredMenus.map(item => (
-                            <motion.div layout key={item.id} className="bg-[#111] rounded-[2.5rem] border border-white/5 p-7 group shadow-xl relative overflow-hidden flex flex-col">
-                                <Link href={`/menu/${item.id}`} className="cursor-pointer">
-                                    <div className="h-52 rounded-2xl overflow-hidden mb-6 relative">
-                                        <img src={item.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={item.name} />
-                                        <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-[8px] font-black uppercase text-[#d4a365]">
-                                            {item.category}
-                                        </div>
+                            <motion.div layout key={item.id} className="bg-[#111] rounded-[2.5rem] border border-white/5 p-7 group shadow-xl flex flex-col">
+                                <Link href={`/menu/${item.id}`} className="h-52 rounded-2xl overflow-hidden mb-6 relative">
+                                    <img src={item.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={item.name} />
+                                    <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-[8px] font-black uppercase text-[#d4a365]">
+                                        {item.category}
                                     </div>
-                                    <h3 className="text-xl font-bold mb-1 text-white group-hover:text-[#d4a365] transition-colors">{item.name}</h3>
-                                    <p className="text-gray-500 text-xs mb-6 italic line-clamp-2">{item.description}</p>
                                 </Link>
+                                <h3 className="text-xl font-bold mb-1 text-white group-hover:text-[#d4a365] transition-colors">{item.name}</h3>
+                                <p className="text-gray-500 text-xs mb-6 italic line-clamp-2">{item.description}</p>
                                 <div className="mt-auto pt-4 border-t border-white/5">
                                     <div className="flex justify-between items-center mb-6">
                                         <span className="text-[#d4a365] font-bold text-xl font-mono">₮{item.price.toLocaleString()}</span>
@@ -266,7 +280,7 @@ export default function MenuListPage() {
                                         addItem({ ...item, quantity: qty });
                                         setQuantities(prev => ({ ...prev, [item.id]: 0 }));
                                         toast.success(`${item.name} нэмэгдлээ`);
-                                    }} className="w-full bg-[#d4a365] text-black font-black py-4 rounded-2xl uppercase text-[10px] tracking-widest hover:bg-[#f0c080] active:scale-95 transition-all shadow-[0_10px_20px_-10px_rgba(212,163,101,0.4)]">
+                                    }} className="w-full bg-[#d4a365] text-black font-black py-4 rounded-2xl uppercase text-[10px] tracking-widest hover:bg-[#f0c080] active:scale-95 transition-all">
                                         Сагсанд нэмэх
                                     </button>
                                 </div>
@@ -276,6 +290,7 @@ export default function MenuListPage() {
                 )}
             </div>
 
+            {/* Sidebar Cart - Хэвээрээ */}
             <AnimatePresence>
                 {isCartOpen && (
                     <div className="fixed inset-0 z-50 flex justify-end">
@@ -289,13 +304,13 @@ export default function MenuListPage() {
                                 {mounted && cartItems.length === 0 ? (
                                     <div className="h-full flex flex-col items-center justify-center text-gray-600 italic text-sm opacity-50">Сагс одоогоор хоосон...</div>
                                 ) : mounted && cartItems.map(item => (
-                                    <div key={item.id} className="flex gap-4 items-center bg-[#151515] p-4 rounded-[2rem] border border-white/5 group">
+                                    <div key={item.id} className="flex gap-4 items-center bg-[#151515] p-4 rounded-[2rem] border border-white/5">
                                         <img src={item.image} className="w-16 h-16 rounded-2xl object-cover" alt={item.name} />
                                         <div className="flex-grow">
                                             <h4 className="font-bold text-sm text-white">{item.name}</h4>
                                             <p className="text-[#d4a365] text-xs font-mono font-bold">₮{item.price.toLocaleString()} <span className="text-gray-600 ml-1">x {item.quantity}</span></p>
                                         </div>
-                                        <button onClick={() => removeItem(item.id)} className="p-2 text-gray-700 hover:text-red-500 transition-colors"><X className="w-4 h-4" /></button>
+                                        <button onClick={() => removeItem(item.id)} className="p-2 text-gray-700 hover:text-red-500"><X className="w-4 h-4" /></button>
                                     </div>
                                 ))}
                             </div>
@@ -304,7 +319,11 @@ export default function MenuListPage() {
                                     <span className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Төлөх дүн</span>
                                     <span className="text-3xl font-bold text-[#d4a365] font-mono tracking-tighter">₮{totalPrice.toLocaleString()}</span>
                                 </div>
-                                <button onClick={() => setIsPaying(true)} disabled={cartItems.length === 0 || isOrdering} className="w-full bg-[#d4a365] text-black font-black py-5 rounded-[2.5rem] hover:bg-[#f0c080] transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-30 shadow-2xl">
+                                <button
+                                    onClick={() => setIsPaying(true)}
+                                    disabled={cartItems.length === 0 || isOrdering}
+                                    className="w-full bg-[#d4a365] text-black font-black py-5 rounded-[2.5rem] hover:bg-[#f0c080] transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-30"
+                                >
                                     {isOrdering ? <Loader2 className="animate-spin w-5 h-5" /> : <><Smartphone className="w-5 h-5" /> Захиалга баталгаажуулах</>}
                                 </button>
                             </div>

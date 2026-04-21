@@ -1,59 +1,33 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
-type ApiError = { error: string };
-
-interface CreateOrderRequest {
-  studentName: string;
-  itemName: string;
-  quantity: number;
-}
-
 export async function POST(req: Request) {
   try {
-    const body: unknown = await req.json().catch(() => null);
+    const body = await req.json();
+    const { studentName, itemName, quantity, menuItemId } = body;
 
-    if (!body || typeof body !== "object") {
-      return NextResponse.json({ error: "Invalid body" } satisfies ApiError, {
-        status: 400,
-      });
-    }
-
-    const { studentName, itemName, quantity } = body as CreateOrderRequest;
-
-    // Төрөл бүрийг нарийн шалгах
-    if (typeof studentName !== "string" || studentName.trim().length === 0) {
+    // ШАЛГАЛТ: Мэдээлэл дутуу ирж байгаа эсэхийг шалгана
+    if (!studentName || !menuItemId) {
+      console.error("Missing fields:", { studentName, menuItemId });
       return NextResponse.json(
-        { error: "studentName is required" } satisfies ApiError,
-        { status: 400 },
-      );
-    }
-    if (typeof itemName !== "string" || itemName.trim().length === 0) {
-      return NextResponse.json(
-        { error: "itemName is required" } satisfies ApiError,
-        { status: 400 },
-      );
-    }
-    if (typeof quantity !== "number" || quantity <= 0) {
-      return NextResponse.json(
-        { error: "valid quantity is required" } satisfies ApiError,
+        { error: "Оюутны нэр эсвэл Хоолны ID дутуу байна." },
         { status: 400 },
       );
     }
 
     const newOrder = await prisma.order.create({
       data: {
-        studentName: studentName.trim(),
-        itemName: itemName.trim(),
-        quantity: quantity,
+        studentName,
+        itemName,
+        quantity: Number(quantity) || 1,
+        menuItemId: Number(menuItemId), // Энийг заавал Number болгоно
+        status: "PENDING",
       },
     });
 
-    return NextResponse.json({ ok: true, order: newOrder }, { status: 201 });
-  } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: "Server error" } satisfies ApiError, {
-      status: 500,
-    });
+    return NextResponse.json(newOrder, { status: 201 });
+  } catch (error: any) {
+    console.error("Order Create Error:", error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

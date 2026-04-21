@@ -33,6 +33,7 @@ model MenuItem {
   image       String
   category    String
   reviews     Review[]
+  orders      Order[] //MenuItem-г Order-той холбох
 }
 
 model Review {
@@ -45,19 +46,22 @@ model Review {
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
   menuItemId Int
 
-  // Энийг яг ингэж бичнэ. Өмнө нь itemName-тэй байсан бол menuItemId-аар соль.
+  // Оюутан нэг хоолонд нэг л үнэлгээ өгөх боломжтой
   @@unique([studentName, menuItemId])
 }
 
 model Order {
   id          Int    @id @default(autoincrement())
   studentName String
-  itemName    String
+  itemName    String // Түүхэнд харагдах нэр
   quantity    Int
+  status      String @default("PENDING")
 
-  status String @default("PENDING")
+  // ЧУХАЛ: Refresh хийх үед Review-г олж ирэх холбоос
+  menuItemId Int?
+  menuItem   MenuItem? @relation(fields: [menuItemId], references: [id])
 
-  rating Int?
+  rating Int? // Энэ нь тухайн захиалгад өгсөн түр зуурын утга байж болно
   review String?
 
   createdAt DateTime @default(now())

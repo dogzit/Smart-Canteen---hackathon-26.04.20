@@ -4,30 +4,32 @@ import { NextResponse } from "next/server";
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const { studentName, rating, review, itemName } = body;
-    let menuItemId = body.menuItemId;
+    const { studentName, menuItemId, rating, review } = body;
 
-    // 1. Хэрэв ID байхгүй бол нэрээр нь ID-г шүүж олох
-    if (!menuItemId && itemName) {
-      const item = await prisma.menuItem.findFirst({
-        where: { name: itemName },
-      });
-      menuItemId = item?.id;
+    // 1. ID байгаа эсэхийг шалгах
+    if (!menuItemId || isNaN(Number(menuItemId))) {
+      return NextResponse.json({ error: "Буруу MenuItem ID" }, { status: 400 });
     }
 
-    // 2. Шаардлагатай дата байгаа эсэхийг шалгах
-    if (!studentName || !menuItemId || !rating) {
+    // 2. Энэ ID-тай хоол баазад байгаа эсэхийг шалгах
+    const itemExists = await prisma.menuItem.findUnique({
+      where: { id: Number(menuItemId) },
+    });
+
+    if (!itemExists) {
       return NextResponse.json(
-        { error: "Хоолны мэдээлэл дутуу байна (ID эсвэл Нэр олдсонгүй)" },
-        { status: 400 },
+        {
+          error: `ID: ${menuItemId} бүхий хоол олдсонгүй. Уучлаарай, хуучин захиалга дээр үнэлгээ өгөх боломжгүй.`,
+        },
+        { status: 404 },
       );
     }
 
-    // 3. Review-г Upsert хийх
+    // 3. Байгаа бол Upsert хийх
     const result = await prisma.review.upsert({
       where: {
         studentName_menuItemId: {
-          studentName: studentName,
+          studentName,
           menuItemId: Number(menuItemId),
         },
       },
@@ -36,20 +38,18 @@ export async function PATCH(req: Request) {
         review: review || "",
       },
       create: {
-        studentName: studentName,
+        studentName,
         rating: Number(rating),
         review: review || "",
-        menuItem: {
-          connect: { id: Number(menuItemId) },
-        },
+        menuItemId: Number(menuItemId),
       },
     });
 
-    return NextResponse.json({ success: true, data: result });
-  } catch (e: any) {
-    console.error("PATCH Error:", e);
+    return NextResponse.json(result);
+  } catch (error: any) {
+    console.error("Review error:", error);
     return NextResponse.json(
-      { error: "Алдаа гарлаа", details: e.message },
+      { error: "Үнэлгээ хадгалахад алдаа гарлаа" },
       { status: 500 },
     );
   }
